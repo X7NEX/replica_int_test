@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REPLICA SYSTEM MERGE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap');
+        
+        /* === СТИЛИ ИЗ ПЕРВОГО КОДА (ОСНОВА) === */
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-accent: #1a1a25; 
+            --bg-input: #08080d;
+            --accent: #911b40;
+            --accent-glow: rgba(255, 42, 109, 0.6);
+            --cyan: #f1bebc; /* Твой оригинальный цвет заголовков */
+            --cyan-glow: rgba(230, 49, 49, 0.5);
+            --neon-blue: #05d9e8; /* Добавил для чистого циана (текст значений) */
+            --yellow: #f9f002;
+            --text: #d1f7ff;
+            --text-muted: #8a5a5a;
+            --success: #56ecae;
+            --warning: #f9f002;
+            --border: rgba(243, 143, 210, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden; /* Чтобы не было скролла от эффектов */
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(232, 5, 35, 0.03) 25%, rgba(5, 217, 232, 0.03) 26%, transparent 27%, transparent 74%, rgba(5, 217, 232, 0.03) 75%, rgba(5, 217, 232, 0.03) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(5, 217, 232, 0.03) 25%, rgba(5, 217, 232, 0.03) 26%, transparent 27%, transparent 74%, rgba(5, 217, 232, 0.03) 75%, rgba(5, 217, 232, 0.03) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+        }
+
+        /* Слой с фоновой картинкой */
+        .background-overlay {
+            position: fixed;
+            /* Делаем отступы по краям, чтобы видеть старый фон */
+            top: 20px;
+            bottom: 20px;
+            left: 150px;
+            right: 150px;
+            
+            background: url('back.jpg') no-repeat center;
+            background-size: cover; /* Заполнит пространство 1440x1089 */
+            opacity: 0.55; /* Прозрачность 25% */
+            z-index: -1; /* Уходит под все элементы */
+            pointer-events: none; /* Не мешает кликам */
+            
+            /* Киберпанк рамка для самого фона */
+            border: 1px solid rgba(5, 217, 232, 0.2);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.5);
+            
+            /* Скошенные углы как у карточек */
+            clip-path: polygon(
+                0 30px, 30px 0, calc(100% - 30px) 0, 100% 30px,
+                100% calc(100% - 30px), calc(100% - 30px) 100%, 30px 100%, 0 calc(100% - 30px)
+            );
+        }
+
+        /* Сканирующие линии */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.15) 2px, rgba(0, 0, 0, 0.15) 4px
+            );
+            pointer-events: none;
+            z-index: 9999;
+            animation: scanlineFlicker 0.1s infinite;
+        }
+
+                /* === СТИЛИ КАРТОЧЕК С ГИФКОЙ === */
+        .card, .stats-panel {
+            /* СЛОЕНЫЙ ФОН */
+            background: 
+                /* 1. Твой оригинальный цветной блик (сверху) */
+                linear-gradient(135deg, rgba(255, 42, 109, 0.05) 0%, transparent 50%, rgba(5, 217, 232, 0.05) 100%),
+                
+                /* 2. Сильное затемнение (чтобы текст читался поверх гифки) */
+                linear-gradient(rgba(29, 17, 20, 0.92), rgba(18, 18, 26, 0.96)),
+                
+                /* 3. ТВОЯ ГИФКА (Вставь свою ссылку сюда) */
+                url('obloga2.gif') center center,
+                
+                /* 4. Базовый цвет фона (подложка) */
+                var(--bg-card);
+
+            background-size: cover;      /* Растягиваем на всю карточку */
+            /* background-size: 200px; */ /* ИЛИ используй это, если гифка - мелкий паттерн */
+            
+            padding: 20px;
+            margin-bottom: 20px;
+            position: relative;
+            
+            /* Твои настройки формы */
+            clip-path: polygon(
+                0 15px, 15px 0, calc(100% - 15px) 0, 100% 15px,
+                100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px)
+            );
+            
+            border: 1px solid var(--border);
+            
+            /* Тени */
+            box-shadow: 
+                0 0 30px rgba(0,0,0,0.6),
+                inset 0 0 40px rgba(0, 0, 0, 0.3);
+            
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card::before, .stats-panel::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--cyan), var(--accent), transparent);
+            opacity: 0.7;
+        }
+
+        .card::after, .stats-panel::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent);
+            opacity: 0.7;
+        }
+
+        /* Заголовки (стиль первого макета) */
+        h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--cyan);
+            border-bottom: 1px solid rgba(243, 143, 210, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-shadow: 0 0 20px var(--cyan-glow);
+        }
+
+        h2::before, h3::before {
+            content: '//';
+            color: var(--accent);
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* === ТВОИ СТИЛИ СТАТОВ (Sidebar) === */
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        
+        .stat-item:hover {
+            background: linear-gradient(90deg, rgba(145, 27, 64, 0.1), transparent);
+        }
+
+        .stat-item-name {
+            font-size: 0.9em;
+            color: var(--text);
+        }
+
+        .stat-item-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(1, 255, 188, 0.4);
+        }
+
+        /* Цвета значений */
+        .val-hp { color: #ff4757; text-shadow: 0 0 10px rgba(255, 71, 87, 0.5); }
+        .val-psy { color: #9b6aeb; text-shadow: 0 0 10px rgba(155, 106, 235, 0.5); }
+        .val-en { color: var(--yellow); text-shadow: 0 0 10px rgba(249, 240, 2, 0.4); }
+        .val-def { color: #a0a0a0; }
+        .val-ini { color: #f58c46; }
+        .val-slt { color: #e7acda; }
+        .val-spd { color: var(--success); text-shadow: 0 0 10px var(--cyan-glow); }
+
+                /* --- ГЛАВНАЯ СЕТКА (Больше воздуха) --- */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px minmax(500px, 750px) 320px;
+            gap: 40px;    
+            max-width: 1600px;
+            margin: 20px auto 0;
+            justify-content: center; 
+            height: calc(100vh - 60px);
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        /* === ИНВЕНТАРЬ (Интеграция в стиль) === */
+        .inventory-section {
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+        
+        .inventory-grid {
+            display: grid;
+            /* БЫЛО: repeat(5, 1fr); */
+            /* СТАЛО: 4 колонки (ячейки станут КРУПНЕЕ) */
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 8px; /* Чуть больше расстояние между ячейками */
+        }
+
+        .inv-cell {
+            aspect-ratio: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1); /* Чуть ярче границы */
+            position: relative;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+
+        .inv-cell:hover {
+            border-color: var(--cyan); /* Цвет при наведении */
+            background: rgba(5, 217, 232, 0.05);
+            box-shadow: inset 0 0 15px var(--accent-glow);
+            transform: scale(1.02);
+        }
+        
+        /* Декор уголок ячейки */
+        .inv-cell::after {
+            content: ''; position: absolute; bottom: 0; right: 0;
+            width: 6px; height: 6px; 
+            border-bottom: 2px solid var(--text-muted); 
+            border-right: 2px solid var(--text-muted);
+        }
+
+        /* === ЦЕНТРАЛЬНАЯ ПАНЕЛЬ (Вкладки и Персонаж) === */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: var(--bg-card-accent);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-family: 'Orbitron', sans-serif;
+            padding: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background: rgba(145, 27, 64, 0.2);
+            border-color: var(--accent);
+            color: var(--cyan);
+            text-shadow: 0 0 8px var(--accent-glow);
+        }
+
+                /* Сетка внутри центральной карточки */
+        /* --- СЕТКА ВНУТРИ КАРТОЧКИ (Фикс высоты) --- */
+        .char-container {
+            display: grid;
+            grid-template-columns: 240px 1fr; 
+            gap: 20px;
+            flex-grow: 1;
+            overflow: hidden;
+            
+            /* ВАЖНО: Растягиваем колонки по высоте, чтобы они были равны */
+            align-items: stretch; 
+        }
+        
+        /* Обертка для правой части (Имя + Силуэт + Щит) */
+        .right-column-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Центруем все элементы по горизонтали */
+            height: 100%;
+            position: relative;
+        }
+
+        /* --- ЛЕВАЯ КОЛОНКА --- */
+        .char-info {
+            width: 100%;
+            height: 100%; /* Занимаем всю доступную высоту */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+                /* --- ИНФО-БОКСЫ (Фикс длинного текста) --- */
+        .info-box {
+            background: rgba(0,0,0,0.2);
+            border-left: 2px solid var(--border);
+            padding: 8px 10px;
+            margin-bottom: 6px;
+            color: var(--text);
+            
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Центруем по вертикали */
+            gap: 10px; /* Отступ между текстом и цифрой */
+        }
+
+        /* Название (слева) */
+        .info-box span:first-child {
+            font-size: 0.75em; /* Чуть уменьшил шрифт, чтобы влезало */
+            line-height: 1.2;
+            text-align: left;
+            word-wrap: break-word; /* Разрешаем перенос слов */
+        }
+
+        /* Значение (справа) */
+        .info-box span:last-child {
+            white-space: nowrap; /* ЗАПРЕЩАЕМ перенос строки для цифр */
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-align: right;
+            min-width: fit-content; /* Занимает столько места, сколько нужно */
+        }
+
+        /* --- СЕКЦИЯ БАФФОВ (Новая) --- */
+        .buffs-container {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            background: rgba(5, 217, 232, 0.05); /* Легкий голубой фон */
+            border: 1px dashed rgba(5, 217, 232, 0.3);
+            padding: 8px;
+        }
+
+        .buffs-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7em;
+            color: var(--neon-blue);
+            margin-bottom: 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid rgba(5, 217, 232, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .buff-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .buff-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75em;
+            color: var(--text);
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+        .buff-item:last-child { border-bottom: none; }
+
+        .buff-val {
+            color: var(--success);
+            font-family: 'Orbitron';
+        }
+
+        .buff-val.minus {
+            color: #ff4757; /* Красный цвет */
+            text-shadow: 0 0 5px rgba(255, 71, 87, 0.4);
+        }
+
+                /* --- СТИЛИ ДЛЯ ВРЕМЕННЫХ БАФФОВ --- */
+        
+        /* Модификация контейнера (Желтый акцент) */
+        .buffs-container.temporary {
+            background: rgba(249, 240, 2, 0.05);
+            border-color: rgba(249, 240, 2, 0.3);
+        }
+        .buffs-container.temporary .buffs-header {
+            color: var(--yellow);
+            border-bottom-color: rgba(249, 240, 2, 0.2);
+        }
+
+        /* Таймер (Время действия) */
+        .buff-timer {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.85em;
+            color: var(--text-muted);
+            margin-right: 10px; /* Отступ от значения бонуса */
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .buff-timer i { font-size: 0.8em; }
+
+        /* Чтобы название занимало всё место слева, а таймер и бонус прижались вправо */
+        .buff-item span:first-child {
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+
+        /* --- БЛОК РАН --- */
+        .wounds-wrapper {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .wounds-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75em;
+            color: var(--stat-red);
+            border-bottom: 1px solid rgba(255, 71, 87, 0.3);
+            margin-bottom: 6px;
+            padding-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        /* SCROLL */
+        .wounds-scroll {
+            max-height: 110px;            /* ГАРАНТИРУЕТ СКРОЛЛ */
+            overflow-y: auto;
+        }
+
+        /* GRID */
+        .wounds-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+        }
+
+        /* SCROLLBAR */
+        .wounds-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .wounds-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+        }
+        .wounds-scroll::-webkit-scrollbar-thumb {
+            background: var(--stat-red);
+            border-radius: 2px;
+        }
+
+        /* ICON */
+        .wound-item {
+            height: 36px;                 /* ИКОНКИ БОЛЬШЕ */
+            background: rgba(40, 10, 10, 0.4);
+            border: 1px solid #5c1818;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #ff4757;
+            font-size: 1.2em;
+            cursor: help;
+
+            position: relative;
+            transition: 0.15s;
+        }
+
+        .wound-item:hover {
+            background: #ff4757;
+            color: #000;
+            border-color: #ff4757;
+        }
+
+        /* TOOLTIP — ВСЕГДА ВНИЗ */
+        .wound-item::after {
+            content: attr(data-desc);
+
+            position: absolute;
+            top: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+
+            background: #111;
+            border: 1px solid #ff4757;
+            color: #fff;
+
+            padding: 5px 8px;
+            font-size: 0.7em;
+            white-space: nowrap;
+
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: 0.15s;
+            z-index: 999;
+        }
+
+        .wound-item:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+
+        
+        /* Панель ХП (чтобы не сжималась) */
+        .hp-panel {
+            flex-shrink: 0; /* Запрещаем сжимать панель ХП */
+        }
+
+        /* --- ПАНЕЛЬ ХП (Прижата к низу) --- */
+        .hp-panel {
+            margin-top: auto; /* Гарантированно внизу */
+            background: rgba(255, 71, 87, 0.05);
+            border: 1px solid var(--stat-red);
+            padding: 10px;
+        }
+
+        .hp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 5px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .hp-label { color: var(--stat-red); font-size: 0.9em; font-weight: bold; }
+        .hp-value { color: #fff; font-size: 1.1em; }
+
+        .hp-track {
+            height: 12px;
+            background: #1a0505;
+            border: 1px solid rgba(255, 71, 87, 0.3);
+            position: relative;
+            transform: skewX(-10deg);
+        }
+
+        .hp-fill-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #8a0e0e 0%, #ff4757 100%);
+            box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+            position: relative;
+            transition: width 0.3s;
+        }
+
+        /* Текстура "полоски" */
+        .hp-fill-bar::before {
+            content: ''; position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(0,0,0,0.3) 5px,
+                rgba(0,0,0,0.3) 10px
+            );
+        }
+
+        .info-box:hover {
+            border-left-color: var(--accent);
+            background: linear-gradient(90deg, rgba(145, 27, 64, 0.1), transparent);
+        }
+
+        /* Блок с силуэтом и гифкой */
+        .character-view {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            /* --- ИЗМЕНЕНИЯ РАЗМЕРА --- */
+            width: 100%;
+            max-width: 400px; /* Ограничиваем ширину, чтобы не был слишком широким */
+            margin: 0 auto;   /* Центруем блок внутри колонки */
+            
+            background: 
+                linear-gradient(rgba(66, 37, 43, 0.25), rgba(22, 7, 9, 0.3)),
+                url('body.gif') no-repeat center center;
+            background-size: cover;
+            border: 1px solid var(--border);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+            overflow: hidden;
+            /* Скругляем углы немного, чтобы вписалось в дизайн */
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+
+        /* Дополнительно: чтобы сетка гифки не перекрывала силуэт */
+        .character-view img {
+            position: relative;
+            z-index: 1;
+            max-width: 90%;
+            max-height: 90%;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 15px rgba(238, 123, 123, 0.3));
+        }
+        /* Слоты */
+        .equip-slot {
+            position: absolute;
+            width: 70px; height: 70px;
+            background: rgba(10, 10, 15, 0.85);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: var(--text-muted);
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            transition: 0.3s;
+        }
+
+        .equip-slot:hover {
+            border-color: var(--cyan);
+            color: var(--cyan);
+            box-shadow: 0 0 20px var(--accent-glow);
+            z-index: 10;
+        }
+        
+        .equip-slot i { font-size: 1.5em; margin-bottom: 5px; color: var(--text); }
+
+        /* --- ПОЗИЦИОНИРОВАНИЕ СЛОТОВ --- */
+
+        /* СПИНА (У правого плеча) */
+        #slot-back { 
+            top: 15%; 
+            right: 15%; 
+            border-color: var(--success);
+        }
+
+        /* ТЕЛО (По центру груди) */
+        #slot-chest { 
+            top: 25%; 
+            left: 50%; 
+            transform: translateX(-50%); /* Центрирует ровно по оси X */
+            border-color: var(--cyan);
+            z-index: 5;
+        }
+
+        /* ПРАВАЯ РУКА (Viewer's Left - у кисти) */
+        #slot-rhand { 
+            top: 50%; 
+            left: 8%; 
+            width: 80px; 
+            height: 80px; 
+            border-color: var(--success);
+        }
+
+        /* ЛЕВАЯ РУКА (Viewer's Right - у кисти) */
+        #slot-lhand { 
+            top: 50%; 
+            right: 8%; 
+            width: 80px; 
+            height: 80px; 
+            border-color: var(--success);
+        }
+
+        /* ГАДЖЕТ (Внизу по центру) */
+        #slot-gadget { 
+            bottom: 5%; 
+            left: 25%; 
+            transform: translateX(-50%); 
+            border-color: var(--yellow); 
+        }
+
+         /* --- ПАНЕЛЬ ЩИТА (Cyberpunk Style - UPDATED) --- */
+        .shield-panel {
+            /* КОПИРУЕМ РАЗМЕРЫ СИЛУЭТА */
+            width: 100%;
+            max-width: 400px; 
+            
+            /* Отступ сверху от ног персонажа */
+            margin: 10px auto 0; 
+            
+            /* Дизайн (оставляем киберпанк) */
+            background: rgba(10, 12, 16, 0.95);
+            border: 1px solid rgba(5, 217, 232, 0.3);
+            
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 15px;
+            
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        /* Декор линии сверху */
+        .shield-panel::before {
+            content: ''; position: absolute; top: 0; left: 20%; right: 20%; height: 1px;
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+            opacity: 0.5;
+        }
+
+        /* ЛЕВАЯ ЧАСТЬ: Группа (Имя + Расход) */
+        .shield-left-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 90px;
+        }
+
+        .shield-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.75em;
+            line-height: 1;
+            text-shadow: 0 0 10px rgba(5, 217, 232, 0.4);
+        }
+        .shield-label i { font-size: 1.2em; }
+
+        /* Стиль для Расхода */
+        .shield-drain {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.75em;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-left: 24px; /* Отступ под текст, чтобы ровно под названием */
+        }
+        .drain-val {
+            color: var(--yellow);
+            text-shadow: 0 0 5px rgba(249, 240, 2, 0.4);
+        }
+
+        /* ЦЕНТР: Полоска */
+        .shield-bar-container {
+            flex-grow: 1;
+            height: 10px;
+            background: #0b0b10;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+            transform: skewX(-15deg);
+            overflow: hidden;
+            margin: 0 15px; /* Отступы от краев */
+        }
+
+        .shield-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--cyan) 0%, #028fa3 100%);
+            box-shadow: 0 0 15px var(--cyan);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        /* Текстура полоски */
+        .shield-fill::after {
+            content: ''; position: absolute; inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 4px,
+                rgba(0,0,0,0.5) 4px,
+                rgba(0,0,0,0.5) 5px
+            );
+        }
+
+        /* СОСТОЯНИЕ OFF (Серый цвет, без свечения) */
+        .shield-fill.off {
+            background: #33333d; /* Темно-серый */
+            box-shadow: none;
+            filter: grayscale(100%);
+        }
+        .shield-fill.off .shield-glare { display: none; }
+
+        /* Блик анимация */
+        .shield-glare {
+            position: absolute; top: 0; bottom: 0; width: 15px;
+            background: rgba(255,255,255,0.7);
+            filter: blur(3px);
+            animation: shieldGlare 2.5s infinite;
+        }
+        @keyframes shieldGlare {
+            0% { left: -20%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { left: 120%; opacity: 0; }
+        }
+
+        /* ПРАВАЯ ЧАСТЬ */
+        .shield-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .shield-val {
+            font-family: 'Orbitron';
+            font-size: 0.85em;
+            color: #fff;
+            letter-spacing: 1px;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        /* КНОПКА ТУМБЛЕР */
+        .cyber-toggle {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            font-family: 'Orbitron';
+            font-size: 0.7em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            width: 50px;
+            text-align: center;
+        }
+
+        /* Активная кнопка (ON) */
+        .cyber-toggle.active {
+            border-color: var(--cyan);
+            background: rgba(5, 217, 232, 0.15);
+            color: var(--cyan);
+            box-shadow: 0 0 8px rgba(5, 217, 232, 0.3);
+            text-shadow: 0 0 5px var(--cyan);
+        }
+        
+        .cyber-toggle:hover:not(.active) {
+            border-color: #fff; color: #fff;
+        }
+
+        /* --- КНОПКА ТУМБЛЕР --- */
+        .cyber-toggle {
+            background: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 4px 12px;
+            font-family: 'Orbitron';
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            min-width: 50px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Состояние ВКЛ (active) */
+        .cyber-toggle.active {
+            border-color: var(--cyan);
+            background: rgba(5, 217, 232, 0.15);
+            color: var(--cyan);
+            box-shadow: 
+                0 0 10px rgba(5, 217, 232, 0.4),
+                inset 0 0 10px rgba(5, 217, 232, 0.2);
+            text-shadow: 0 0 5px var(--cyan);
+        }
+
+        /* Эффект нажатия */
+        .cyber-toggle:active { transform: scale(0.95); }
+
+        /* Ховер */
+        .cyber-toggle:hover:not(.active) {
+            border-color: #fff;
+            color: #fff;
+        }
+
+               /* --- ПРАВАЯ ПАНЕЛЬ (Стили из старого дизайна) --- */
+        
+        /* Заголовки секций */
+        .section-header {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1em;
+            color: var(--cyan);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .section-header:first-child { margin-top: 0; }
+
+        /* Списки (Атрибуты и Навыки) */
+        .attr-list { 
+            list-style: none; 
+            padding: 0;
+        }
+        
+        .attr-list li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: rgba(255, 255, 255, 0.03);
+            border-left: 3px solid transparent; /* Цветная полоска слева */
+            transition: all 0.2s;
+        }
+        
+        .attr-list li:hover {
+            background: rgba(255, 255, 255, 0.07);
+            padding-left: 15px;
+        }
+
+        .attr-name { 
+            flex-grow: 1; 
+            font-size: 0.9em; 
+            color: var(--text);
+        }
+        
+                /* --- ФИКС ВЫРАВНИВАНИЯ АТРИБУТОВ --- */
+
+        /* 1. Настраиваем общие стили для цифр */
+        .attr-value, .attr-bonus {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 0.85em;
+            
+            /* ВАЖНО: Фиксируем размеры, чтобы не скакало */
+            height: 24px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            border: 1px solid transparent; /* Резерв под рамку */
+        }
+        
+        /* 2. Квадратик с атрибутом (3) */
+        .attr-value { 
+            width: 30px; /* Фиксированная ширина */
+            background: rgba(0,0,0,0.5); 
+            border-color: rgba(255,255,255,0.1);
+            color: inherit; /* Берет цвет от ряда (li) */
+        }
+        
+        /* 3. Квадратик с бонусом (+10%) */
+        .attr-bonus { 
+            width: 55px; /* Фиксированная ширина (влезет и -20% и +100%) */
+            background: #1a1a20; 
+            color: var(--success); 
+            border: 1px solid #333;
+            margin-left: 8px; /* Отступ от значения */
+        }
+
+        /* 4. Стиль для минуса (Красный) */
+        .attr-bonus.minus {
+            color: #ff4757; 
+            border-color: rgba(255, 71, 87, 0.3);
+            background: rgba(40, 10, 10, 0.4); 
+            /* Ширина останется 55px, блок не разжиреет */
+        }
+        
+
+        /* --- ЦВЕТА РЯДОВ (Исправленные) --- */
+        /* Красный */
+        .row-red { border-left-color: #db3636; }
+        .row-red .attr-value { color: #db3636; text-shadow: 0 0 5px rgba(219, 54, 54, 0.4); }
+
+        /* Зеленый */
+        .row-green { border-left-color: var(--success); }
+        .row-green .attr-value { color: var(--success); text-shadow: 0 0 5px rgba(86, 236, 174, 0.4); }
+        
+        /* Светло-зеленый (для старого дизайна) */
+        .row-lgreen { border-left-color: #8bc34a; }
+        .row-lgreen .attr-value { color: #8bc34a; }
+
+        /* Фиолетовый */
+        .row-purple { border-left-color: #9b6aeb; }
+        .row-purple .attr-value { color: #9b6aeb; text-shadow: 0 0 5px rgba(155, 106, 235, 0.4); }
+
+        /* Желтый */
+        .row-yellow { border-left-color: #e9a91e; }
+        .row-yellow .attr-value { color: #e9a91e; text-shadow: 0 0 5px rgba(233, 169, 30, 0.4); }
+
+        /* Розовый */
+        .row-pink { border-left-color: #e91e63; }
+        .row-pink .attr-value { color: #e91e63; text-shadow: 0 0 5px rgba(233, 30, 99, 0.4); }
+        
+        /* Серый */
+        .row-grey { border-left-color: #9e9e9e; }
+        .row-grey .attr-value { color: #9e9e9e; }
+        .row-grey .attr-name { color: var(--text-muted); }
+
+        /* --- ПЕРКИ (Старый стиль) --- */
+        .perk-item {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border);
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .perk-header {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            color: #ffdada;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            border-bottom: 1px dashed rgba(255,255,255,0.1);
+            padding-bottom: 5px;
+        }
+        
+        .perk-cost { color: #f74159; }
+        
+        .perk-description {
+            font-size: 0.85em;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        
+        .perk-description span {
+            color: #f78a41;
+            font-weight: bold;
+        }
+
+        /* === HUD ЭЛЕМЕНТЫ (из первого кода) === */
+        .hud-corner {
+            position: fixed; width: 60px; height: 60px; pointer-events: none; z-index: 100; opacity: 0.3;
+        }
+        .hud-corner::before, .hud-corner::after {
+            content: ''; position: absolute; background: var(--cyan); box-shadow: 0 0 10px var(--cyan-glow);
+        }
+        .top-left { top: 10px; left: 10px; }
+        .top-left::before { top: 0; left: 0; width: 30px; height: 2px; }
+        .top-left::after { top: 0; left: 0; width: 2px; height: 30px; }
+        
+        .top-right { top: 10px; right: 10px; }
+        .top-right::before { top: 0; right: 0; width: 30px; height: 2px; }
+        .top-right::after { top: 0; right: 0; width: 2px; height: 30px; }
+
+        .bottom-left { bottom: 10px; left: 10px; }
+        .bottom-left::before { bottom: 0; left: 0; width: 30px; height: 2px; }
+        .bottom-left::after { bottom: 0; left: 0; width: 2px; height: 30px; }
+
+        .bottom-right { bottom: 10px; right: 10px; }
+        .bottom-right::before { bottom: 0; right: 0; width: 30px; height: 2px; }
+        .bottom-right::after { bottom: 0; right: 0; width: 2px; height: 30px; }
+
+        .system-label {
+            position: fixed; font-family: 'Orbitron', sans-serif; font-size: 0.65em; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--cyan); opacity: 0.4; pointer-events: none; z-index: 100;
+            text-shadow: 0 0 10px var(--cyan-glow);
+        }
+        .sl-tl { top: 15px; left: 20px; }
+        .sl-tr { top: 15px; right: 20px; }
+        .sl-bl { bottom: 15px; left: 20px; }
+        .sl-br { bottom: 15px; right: 20px; }
+        .blink { animation: statusBlink 2s infinite; }
+        @keyframes statusBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.3; } }
+
+        /* --- ВОССТАНОВЛЕНИЕ ЭФФЕКТОВ КАРТОЧЕК --- */
+
+        /* 1. Анимация переливания границ */
+        @keyframes borderFlow {
+            0%, 100% { opacity: 0.5; background-position: 0% 50%; }
+            50% { opacity: 1; background-position: 100% 50%; }
+        }
+
+        /* 2. Базовые стили для линий (верх/низ) */
+        .card::before, .stats-panel::before,
+        .card::after, .stats-panel::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-size: 200% 100%; /* Чтобы градиент мог двигаться */
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        /* Верхняя линия (Cyan -> Accent) */
+        .card::before, .stats-panel::before {
+            top: 0;
+            background-image: linear-gradient(90deg, transparent, var(--cyan), var(--accent), transparent);
+            animation: borderFlow 4s ease-in-out infinite;
+        }
+
+        /* Нижняя линия (Accent -> Cyan) */
+        .card::after, .stats-panel::after {
+            bottom: 0;
+            background-image: linear-gradient(90deg, transparent, var(--accent), var(--cyan), transparent);
+            animation: borderFlow 4s ease-in-out infinite reverse;
+        }
+
+        /* 3. ЭФФЕКТ ПРИ НАВЕДЕНИИ (HOVER) */
+        .card:hover, .stats-panel:hover {
+            border-color: rgba(243, 143, 210, 0.6); /* Светлеет рамка */
+            box-shadow: 
+                0 0 40px rgba(0,0,0,0.8),            /* Глубокая тень */
+                0 0 80px rgba(145, 27, 64, 0.25),    /* Красное атмосферное свечение */
+                inset 0 0 40px rgba(0, 0, 0, 0.5),   /* Внутренняя тень */
+                inset 0 1px 0 rgba(255, 255, 255, 0.1); /* Блик сверху */
+            transform: translateY(-2px); /* Едва заметное всплытие */
+            z-index: 5;
+        }
+
+        /* При наведении линии становятся ярче и начинают светиться "неоном" */
+        .card:hover::before, .stats-panel:hover::before,
+        .card:hover::after, .stats-panel:hover::after {
+            opacity: 1;
+            filter: drop-shadow(0 0 8px var(--accent));
+            height: 2px; /* Убедимся, что толщина остается */
+        }
+
+        /* Обертка для правой части (Имя + Силуэт) */
+        .right-column-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Корректируем твой заголовок, чтобы он не ломал верстку отступами */
+        h1.char-name {
+            /* Твои старые стили... */
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: var(--cyan);
+            text-shadow: 0 0 10px var(--cyan-glow), 3px 3px 0 var(--accent);
+            animation: flicker 4s infinite;
+            
+            /* Правки отступов */
+            font-size: 2em;
+            margin: 0 0 15px 0; /* Отступ снизу до головы */
+            width: 100%;
+            z-index: 5;
+        }
+
+        /* Гарантируем, что силуэт займет оставшееся место */
+        .character-view {
+            flex-grow: 1; 
+            width: 100%;
+        }
+
+        @keyframes floatTitle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        @keyframes flicker {
+            0%, 92%, 94%, 96%, 100% { opacity: 1; }
+            93% { opacity: 0.8; text-shadow: 0 0 10px var(--cyan-glow), -3px 0 var(--accent), 3px 0 var(--cyan); }
+            95% { opacity: 0.9; text-shadow: 0 0 10px var(--cyan-glow), 2px 0 var(--accent), -2px 0 var(--cyan); }
+        }
+        
+                /* --- ФИКС СКРОЛЛА ПРАВОЙ ПАНЕЛИ --- */
+        
+        /* 1. Делаем так, чтобы колонка не растягивалась за пределы экрана */
+        .column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;     /* Занимает всю высоту сетки */
+            min-height: 0;    /* ВАЖНО: разрешает сжиматься содержимому */
+            overflow: hidden; /* Обрезает все что торчит наружу */
+        }
+
+        /* 2. Настраиваем карточку, чтобы скролл был ВНУТРИ неё */
+        .card.scrollable {
+            flex-grow: 1;      /* Растягивается на все доступное место */
+            overflow-y: auto;  /* Включает вертикальный скролл */
+            height: 100%;      /* Фиксирует высоту */
+            padding-right: 5px; /* Отступ, чтобы текст не прилипал к скроллу */
+        }
+
+        /* 3. СТИЛИЗАЦИЯ ПОЛОСЫ ПРОКРУТКИ (Cyberpunk) */
+        /* Ширина полосы */
+        .card.scrollable::-webkit-scrollbar {
+            width: 6px; 
+        }
+
+        /* Фон полосы (трек) */
+        .card.scrollable::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 3px;
+        }
+
+        /* Сама ползунок (thumb) */
+        .card.scrollable::-webkit-scrollbar-thumb {
+            background: var(--accent); /* Красный цвет */
+            border-radius: 3px;
+            box-shadow: 0 0 5px var(--accent-glow);
+        }
+
+        /* Ползунок при наведении */
+        .card.scrollable::-webkit-scrollbar-thumb:hover {
+            background: #ff2a6d; /* Ярко-розовый при наведении */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-overlay"></div>
+
+    <!-- HUD (ДЕКОР) -->
+    <div class="hud-corner top-left"></div>
+    <div class="hud-corner top-right"></div>
+    <div class="hud-corner bottom-left"></div>
+    <div class="hud-corner bottom-right"></div>
+
+    <div class="system-label sl-tl">// <span class="blink">replica</span></div>
+    <div class="system-label sl-tr">V0.7.3</div>
+    <div class="system-label sl-bl">// <span class="blink">ACTIVE</span></div>
+    <div class="system-label sl-br">FRAMEWORK</div>
+
+    <!-- ОСНОВНОЙ ЛЕЙАУТ (3 КОЛОНКИ) -->
+    <div class="main-layout">
+        
+        <!-- ЛЕВАЯ КОЛОНКА: СТАТЫ + ИНВЕНТАРЬ -->
+        <aside class="column">
+            <div class="stats-panel" style="height: 100%">
+                <h2>Показатели</h2>
+            
+                <div class="stat-item">
+                    <span class="stat-item-name">Пси-Потенциал</span>
+                    <span class="stat-item-value val-psy">5</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-item-name">Грузоподъёмность</span>
+                    <span class="stat-item-value val-def">0 / 10</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-item-name">Скорость</span>
+                    <span class="stat-item-value val-spd">4</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-item-name">Инициатива</span>
+                    <span class="stat-item-value val-ini">3</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-item-name">Восприятие</span>
+                    <span class="stat-item-value val-spd">2</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-item-name">Скрытность</span>
+                    <span class="stat-item-value val-slt">6</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-item-name">Стамина</span>
+                    <span class="stat-item-value val-en">20</span>
+                </div>
+
+                <div class="inventory-section">
+                    <h3>Инвентарь</h3>
+                     <div class="inventory-grid">
+                        <!-- Ряд 1 -->
+                        <div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div>
+                        <!-- Ряд 2 -->
+                        <div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div>
+                        <!-- Ряд 3 -->
+                        <div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div>
+                        <!-- Ряд 4 -->
+                        <div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div>
+                        <!-- Ряд 5 -->
+                        <div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div>
+                        <!-- Ряд 6-->
+                        <div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div><div class="inv-cell"></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: ВКЛАДКИ + ПЕРСОНАЖ -->
+        <main class="column">
+            <div class="card" style="height: 100%">
+                <div class="tabs">
+                    <button class="tab-btn active">Снаряжение</button>
+                    <button class="tab-btn">Импланты</button>
+                    <button class="tab-btn">Персонаж</button>
+                </div>
+
+                <!-- ГРИД КОНТЕЙНЕР (2 КОЛОНКИ) -->
+                <div class="char-container">
+                    
+                <!-- ЛЕВАЯ КОЛОНКА -->
+                <div class="char-info">
+                
+                <!-- ВЕРХНИЕ СТАТЫ (С фиксом переноса) -->
+                <div class="info-box">
+                    <span>Итоговая Наивысшая Атака (Правой):</span> 
+                    <span style="color:var(--success)">9 +30%</span>
+                </div>
+                <div class="info-box">
+                    <span>Итоговая Наивысшая Атака (Левой):</span> 
+                    <span style="color:var(--text-muted)">-</span>
+                </div>
+                <div class="info-box">
+                    <span>Итоговая Наивысшая Защита:</span> 
+                    <span style="color:var(--neon-blue)">6 +23%</span>
+                </div>
+
+                <!-- БАФФЫ СНАРЯЖЕНИЯ (Отдельная секция) -->
+                <div class="buffs-container">
+                    <div class="buffs-header">
+                        <span>Модификаторы от Снаряжения</span>
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <ul class="buff-list">
+                        <li class="buff-item">
+                            <span>Ловкость</span>
+                            <span class="buff-val">+15%</span>
+                        </li>
+                        <li class="buff-item">
+                            <span>Сила</span>
+                            <span class="buff-val minus">-10%</span>
+                        </li>
+                        <li class="buff-item">
+                            <span>Уклонение</span>
+                            <span class="buff-val">+5%</span>
+                        </li>
+                         <!-- Сюда скриптом можно добавлять новые li -->
+                    </ul>
+                </div>
+
+                                <!-- ВРЕМЕННЫЕ МОДИФИКАТОРЫ -->
+                <div class="buffs-container temporary">
+                    <div class="buffs-header">
+                        <span>Временные Эффекты</span>
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <ul class="buff-list">
+                        
+                        <!-- Пример 1: Ходы -->
+                        <li class="buff-item">
+                            <span>Адреналин</span>
+                            
+                            <!-- Таймер -->
+                            <span class="buff-timer">
+                                <i class="far fa-clock"></i> 3 ход.
+                            </span>
+                            
+                            <!-- Значение -->
+                            <span class="buff-val">+2 Сила</span>
+                        </li>
+
+                        <!-- Пример 2: Минуты (Отрицательный) -->
+                        <li class="buff-item">
+                            <span>Обкакался</span>
+                            
+                            <span class="buff-timer">
+                                <i class="far fa-clock"></i> 10 мин.
+                            </span>
+                            
+                            <span class="buff-val minus">-15% Скорость</span>
+                        </li>
+
+                        <!-- Пример 3: Просто иконка -->
+                        <li class="buff-item">
+                            <span>Стимулятор (XS-4)</span>
+                            
+                            <span class="buff-timer">
+                                <i class="far fa-clock"></i> 1 ход.
+                            </span>
+                            
+                            <span class="buff-val">+3 ХП</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- БЛОК РАН -->
+                    <div class="wounds-wrapper">
+                        <div class="wounds-header">РАНЕНИЯ</div>
+
+                        <div class="wounds-scroll">
+                            <div class="wounds-grid">
+
+                                <div class="wound-item" data-desc="Перелом ребра"><i class="fas fa-bone"></i></div>
+                                <div class="wound-item" data-desc="Кровотечение"><i class="fas fa-droplet"></i></div>
+                                <div class="wound-item" data-desc="Ожог руки"><i class="fas fa-fire"></i></div>
+                                <div class="wound-item" data-desc="Контузия"><i class="fas fa-brain"></i></div>
+                                <div class="wound-item" data-desc="Вывих плеча"><i class="fas fa-user-injured"></i></div>
+
+                                <div class="wound-item" data-desc="Глубокий порез"><i class="fas fa-slash"></i></div>
+                                <div class="wound-item" data-desc="Отравление"><i class="fas fa-flask"></i></div>
+                                <div class="wound-item" data-desc="Шок"><i class="fas fa-bolt"></i></div>
+                                <div class="wound-item" data-desc="Слепота"><i class="fas fa-eye-slash"></i></div>
+                                <div class="wound-item" data-desc="Перелом ноги"><i class="fas fa-wheelchair"></i></div>
+
+                                <div class="wound-item" data-desc="Повреждение ЦНС"><i class="fas fa-microchip"></i></div>
+                                <div class="wound-item" data-desc="Внутр. кровотечение"><i class="fas fa-heart-broken"></i></div>
+                                <div class="wound-item" data-desc="Обморожение"><i class="fas fa-snowflake"></i></div>
+                                <div class="wound-item" data-desc="Радиация"><i class="fas fa-radiation"></i></div>
+                                <div class="wound-item" data-desc="Психоз"><i class="fas fa-laugh-beam"></i></div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
+                
+                <!-- ПАНЕЛЬ ХП -->
+                <div class="hp-panel">
+                    <div class="hp-header">
+                        <span class="hp-label">ТЕЛО</span>
+                        <span class="hp-value">7 / 10</span>
+                    </div>
+                    <div class="hp-track">
+                        <div class="hp-fill-bar" style="width: 70%;"></div>
+                    </div>
+                </div>
+            </div>
+
+                    <!-- ПРАВАЯ КОЛОНКА (Обертка: Имя + Силуэт) -->
+                    <div class="right-column-wrapper">
+                        
+                        <!-- ИМЯ ТЕПЕРЬ ТУТ -->
+                        <h1 class="char-name">CHARACTER NAME</h1>
+
+                        <div class="character-view">
+                            
+                            <div class="equip-slot" id="slot-back"><i class="fas fa-shield-alt"></i><span>Спина</span></div>
+                            <div class="equip-slot" id="slot-chest"><i class="fas fa-tshirt"></i><span>Одежда</span></div>
+                            <div class="equip-slot" id="slot-rhand"><i class="fas fa-gun"></i><span>Правая Рука</span></div>
+                            <div class="equip-slot" id="slot-lhand"><i class="fas fa-gun"></i><span>Левая Рука</span></div>
+                            <div class="equip-slot" id="slot-gadget"><i class="fas fa-microchip"></i><span>Энергощит</span></div>
+                        </div>
+                        <!-- ПАНЕЛЬ ЩИТА -->
+                        <div class="shield-panel">
+                            
+                            <div class="shield-left-group">
+                                <!-- Иконка и Название -->
+                                <div class="shield-label">
+                                    <i class="fas fa-shield-halved"></i>
+                                    <span>Энергощит</span>
+                                </div>
+                                
+                                <!-- НОВОЕ: Расход -->
+                                <div class="shield-drain">
+                                    РАСХОД: <span class="drain-val">2</span>
+                                </div>
+                            </div>
+
+                            <!-- Полоска (Заполнена на 66% = 20/30) -->
+                            <div class="shield-bar-container">
+                                <div class="shield-fill" id="shieldBar" style="width: 66%;">
+                                    <div class="shield-glare"></div>
+                                </div>
+                            </div>
+
+                            <!-- Цифры и Кнопка -->
+                            <div class="shield-controls">
+                                <span class="shield-val">20/30</span>
+                                
+                                <button class="cyber-toggle active" onclick="toggleShield(this)">
+                                    <span>ON</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+                <!-- ПРАВАЯ КОЛОНКА: АТРИБУТЫ + ПЕРКИ -->
+        <aside class="column">
+            <div class="card scrollable">
+                
+                <!-- АТРИБУТЫ (Твои данные, Старый стиль списка) -->
+                <h3 class="section-header">Атрибуты</h3>
+                <ul class="attr-list">
+                    <li class="row-red">
+                        <span class="attr-name">Сила</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-green">
+                        <span class="attr-name">Ловкость</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-purple">
+                        <span class="attr-name">Психика</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus minus">-20%</span>
+                    </li>
+                    <li class="row-yellow">
+                        <span class="attr-name">Генетика</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">0%</span>
+                    </li>
+                    <li class="row-pink">
+                        <span class="attr-name">Генетика</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">0%</span>
+                    </li>
+                </ul>
+
+                <!-- НАВЫКИ (Данные из старого дизайна) -->
+                <h3 class="section-header">Типы Боя</h3>
+                <ul class="attr-list">
+                    <li class="row-grey">
+                        <span class="attr-name">Ближний</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-grey">
+                        <span class="attr-name">Дальний</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <h3 class="section-header">Стили Боя</h3>
+                <ul class="attr-list">
+                    <li class="row-red">
+                        <span class="attr-name">Яростный</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-lgreen">
+                        <span class="attr-name">Подлый</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus minus">-20%</span>
+                    </li>
+                    <li class="row-purple">
+                        <span class="attr-name">Техничный</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-pink">
+                        <span class="attr-name">Дерзкий</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                </ul>
+
+                <h3 class="section-header">Защитные Навыки</h3>
+                    <li class="row-lgreen">
+                        <span class="attr-name">Уклонение</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-red">
+                        <span class="attr-name">Парирование</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus minus">-20%</span>
+                    </li>
+                    <li class="row-yellow">
+                        <span class="attr-name">Блокирование</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-pink">
+                        <span class="attr-name">Выдержка</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                
+                <h3 class="section-header">Дополнительные Навыки</h3>
+                    <li class="row-yellow">
+                        <span class="attr-name">Медицина</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                    <li class="row-lgreen">
+                        <span class="attr-name">Техника</span>
+                        <span class="attr-value">3</span>
+                        <span class="attr-bonus">+10%</span>
+                    </li>
+                <!-- ПЕРКИ (Данные из старого дизайна) -->
+                <h3 class="section-header">Перки</h3>
+                
+                <div class="perk-item">
+                    <div class="perk-header">
+                        <span>Точность</span>
+                        <span>Cost: <span class="perk-cost">7</span></span>
+                    </div>
+                    <p class="perk-description">
+                        При нанесении раны, если бросок атаки > защиты на <span>[3]</span>, вы выбираете тип раны.
+                    </p>
+                </div>
+                
+                <div class="perk-item">
+                    <div class="perk-header">
+                        <span>Кибер-Синхронизация</span>
+                        <span>Cost: <span class="perk-cost">4</span></span>
+                    </div>
+                    <p class="perk-description">
+                        Позволяет игнорировать штраф <span>[-1]</span> к Психике за каждый второй имплант.
+                    </p>
+                </div>
+
+            </div>
+        </aside>
+    </div>
+<script>
+    function toggleShield(btn) {
+        // Переключаем класс на кнопке
+        btn.classList.toggle('active');
+        const isActive = btn.classList.contains('active');
+        
+        // Меняем текст кнопки
+        btn.querySelector('span').innerText = isActive ? 'ON' : 'OFF';
+        
+        // Ищем полоску по ID и переключаем ей класс 'off'
+        const bar = document.getElementById('shieldBar');
+        if (isActive) {
+            bar.classList.remove('off');
+        } else {
+            bar.classList.add('off');
+        }
+    }
+</script>
+</body>
+</html>
