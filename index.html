@@ -261,14 +261,33 @@
         .tabs {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* расстояние до следующего контента */
+            position: relative; /* для псевдоэлемента */
+        }
+
+        .tabs::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -7px;          /* прямо под вкладками */
+            width: 100%;
+            height: 1px;        /* тонкая полоска */
+            background: linear-gradient(
+                to right,
+                rgba(255,72,127,0) 0%,    /* левый край прозрачный */
+                rgba(247, 143, 174, 0.8) 50%, /* центр яркий */
+                rgba(255,72,127,0) 100%   /* правый край прозрачный */
+            );
         }
 
         .tab-btn {
             flex: 1;
             background: var(--bg-card-accent);
             border: 1px solid var(--border);
-            color: var(--text-muted);
+            color: #ffcbcb;
+            text-shadow:
+            0 0 6px rgb(0, 0, 0),
+            0 0 10px rgba(233, 109, 146, 0.5);
             font-family: 'Orbitron', sans-serif;
             padding: 12px;
             cursor: pointer;
@@ -281,7 +300,10 @@
             background: rgba(145, 27, 64, 0.2);
             border-color: var(--accent);
             color: var(--cyan);
-            text-shadow: 0 0 8px var(--accent-glow);
+            text-shadow:
+            0 0 6px rgb(255, 185, 185),
+            0 0 22px rgba(255, 72, 127, 0.5);
+            
         }
 
                 /* Сетка внутри центральной карточки */
@@ -588,6 +610,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            box-shadow:
             
             /* --- ИЗМЕНЕНИЯ РАЗМЕРА --- */
             width: 100%;
@@ -613,25 +636,26 @@
             max-height: 90%;
             opacity: 0.9;
             filter: drop-shadow(0 0 15px rgba(238, 123, 123, 0.3));
+            
         }
 
         .character-view::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        background: url('scan2.gif') repeat;
-        opacity: 0.15;                 /* СИЛА ПОМЕХ */
-        mix-blend-mode: screen;        /* ИДЕАЛЬНО ДЛЯ ПОМЕХ */
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url('scan2.gif') repeat;
+            opacity: 0.15;                 /* СИЛА ПОМЕХ */
+            mix-blend-mode: screen;        /* ИДЕАЛЬНО ДЛЯ ПОМЕХ */
 
-        pointer-events: none;
-        z-index: 2;
+            pointer-events: none;
+            z-index: 2;
         }
 
         /* Слоты */
         .equip-slot {
             position: absolute;
             width: 70px; height: 70px;
-            background: rgba(10, 10, 15, 0.85);
+            background: rgb(11, 10, 15);
             border: 1px solid var(--border);
             display: flex;
             flex-direction: column;
