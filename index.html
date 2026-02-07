@@ -555,7 +555,7 @@
         /* --- ПАНЕЛЬ ХП (Прижата к низу) --- */
         .hp-panel {
             margin-top: auto; /* Гарантированно внизу */
-            background: rgba(255, 71, 87, 0.05);
+            background: rgba(10, 10, 10, 0.651);
             border: 1px solid var(--stat-red);
             padding: 10px;
         }
@@ -598,6 +598,27 @@
                 rgba(0,0,0,0.3) 10px
             );
         }
+
+        .armor-fill {
+            background: linear-gradient(90deg, #555 0%, #aaa 100%);
+            box-shadow: 0 0 10px rgba(170, 170, 170, 0.5);
+        }
+
+        /* Текстура полоски броня (копия хп) */
+        .armor-fill::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 5px,
+                rgba(0,0,0,0.2) 5px,
+                rgba(0,0,0,0.2) 10px
+            );
+        }
+
+        .armor-panel .hp-label { color: #aaa; } 
 
         .info-box:hover {
             border-left-color: var(--accent);
@@ -1467,6 +1488,17 @@
                         <div class="hp-fill-bar" style="width: 70%;"></div>
                     </div>
                 </div>
+
+                <!-- ПАНЕЛЬ БРОНИ -->
+                <div class="hp-panel armor-panel">
+                    <div class="hp-header">
+                        <span class="hp-label">БРОНЯ</span>
+                        <span class="hp-value">4 / 6</span>
+                    </div>
+                    <div class="hp-track">
+                        <div class="hp-fill-bar armor-fill" style="width: 66.66%;"></div>
+                    </div>
+                </div>
             </div>
 
                     <!-- ПРАВАЯ КОЛОНКА (Обертка: Имя + Силуэт) -->
@@ -1670,4 +1702,3 @@
 </script>
 </body>
 </html>
-
