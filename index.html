@@ -57,7 +57,7 @@
             
             background: url('back.jpg') no-repeat center;
             background-size: cover; /* Заполнит пространство 1440x1089 */
-            opacity: 0.55; /* Прозрачность 25% */
+            opacity: 0.35; /* Прозрачность 25% */
             z-index: -1; /* Уходит под все элементы */
             pointer-events: none; /* Не мешает кликам */
             
@@ -93,7 +93,7 @@
                 linear-gradient(135deg, rgba(255, 42, 109, 0.05) 0%, transparent 50%, rgba(5, 217, 232, 0.05) 100%),
                 
                 /* 2. Сильное затемнение (чтобы текст читался поверх гифки) */
-                linear-gradient(rgba(29, 17, 20, 0.92), rgba(18, 18, 26, 0.96)),
+                linear-gradient(rgba(29, 17, 20, 0.92), rgba(27, 22, 19, 0.92)),
                 
                 /* 3. ТВОЯ ГИФКА (Вставь свою ссылку сюда) */
                 url('obloga2.gif') center center,
@@ -147,7 +147,7 @@
             text-transform: uppercase;
             letter-spacing: 3px;
             color: var(--cyan);
-            border-bottom: 1px solid rgba(243, 143, 210, 0.1);
+            border-bottom: 1px solid rgba(131, 97, 120, 0.548);
             display: flex;
             align-items: center;
             gap: 15px;
@@ -155,7 +155,7 @@
         }
 
         h2::before, h3::before {
-            content: '//';
+            content: '// r';
             color: var(--accent);
             text-shadow: 0 0 10px var(--accent-glow);
         }
@@ -166,13 +166,17 @@
             justify-content: space-between;
             align-items: center;
             padding: 10px 8px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-left: 2px solid #e4989e;
+            box-shadow: -2px 0 6px rgba(209, 33, 48, 0.6);
+            border-bottom: 1px solid rgb(139, 84, 102);
             transition: all 0.2s ease;
             position: relative;
+            background:linear-gradient(90deg, rgba(0, 0, 0, 0.76), transparent);
         }
         
         .stat-item:hover {
-            background: linear-gradient(90deg, rgba(145, 27, 64, 0.1), transparent);
+            background: linear-gradient(90deg, rgba(53, 15, 15, 0.76), transparent);
+            padding-left: 15px;
         }
 
         .stat-item-name {
@@ -313,7 +317,7 @@
 
                 /* --- ИНФО-БОКСЫ (Фикс длинного текста) --- */
         .info-box {
-            background: rgba(0,0,0,0.2);
+            background: rgba(19, 24, 36, 0.555);
             border-left: 2px solid var(--border);
             padding: 8px 10px;
             margin-bottom: 6px;
@@ -587,12 +591,12 @@
             
             /* --- ИЗМЕНЕНИЯ РАЗМЕРА --- */
             width: 100%;
-            max-width: 400px; /* Ограничиваем ширину, чтобы не был слишком широким */
+            max-width: 385px; /* Ограничиваем ширину, чтобы не был слишком широким */
             margin: 0 auto;   /* Центруем блок внутри колонки */
             
             background: 
                 linear-gradient(rgba(66, 37, 43, 0.25), rgba(22, 7, 9, 0.3)),
-                url('body.gif') no-repeat center center;
+                url('body2.gif') no-repeat center center;
             background-size: cover;
             border: 1px solid var(--border);
             box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
@@ -610,6 +614,19 @@
             opacity: 0.9;
             filter: drop-shadow(0 0 15px rgba(238, 123, 123, 0.3));
         }
+
+        .character-view::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: url('scan2.gif') repeat;
+        opacity: 0.15;                 /* СИЛА ПОМЕХ */
+        mix-blend-mode: screen;        /* ИДЕАЛЬНО ДЛЯ ПОМЕХ */
+
+        pointer-events: none;
+        z-index: 2;
+        }
+
         /* Слоты */
         .equip-slot {
             position: absolute;
@@ -640,8 +657,10 @@
 
         /* СПИНА (У правого плеча) */
         #slot-back { 
-            top: 15%; 
+            top: 7%; 
             right: 15%; 
+            width: 70px; 
+            height: 70px; 
             border-color: var(--success);
         }
 
@@ -649,6 +668,8 @@
         #slot-chest { 
             top: 25%; 
             left: 50%; 
+            width: 70px; 
+            height: 70px; 
             transform: translateX(-50%); /* Центрирует ровно по оси X */
             border-color: var(--cyan);
             z-index: 5;
@@ -658,8 +679,8 @@
         #slot-rhand { 
             top: 50%; 
             left: 8%; 
-            width: 80px; 
-            height: 80px; 
+            width: 70px; 
+            height: 70px; 
             border-color: var(--success);
         }
 
@@ -667,8 +688,8 @@
         #slot-lhand { 
             top: 50%; 
             right: 8%; 
-            width: 80px; 
-            height: 80px; 
+            width: 70px; 
+            height: 70px; 
             border-color: var(--success);
         }
 
@@ -676,6 +697,8 @@
         #slot-gadget { 
             bottom: 5%; 
             left: 25%; 
+            width: 70px; 
+            height: 70px; 
             transform: translateX(-50%); 
             border-color: var(--yellow); 
         }
@@ -888,7 +911,7 @@
             font-family: 'Orbitron', sans-serif;
             font-size: 1em;
             color: var(--cyan);
-            border-bottom: 1px solid var(--border);
+            border-bottom: 1px solid rgb(139, 84, 102);
             padding-bottom: 8px;
             margin-top: 25px;
             margin-bottom: 15px;
@@ -909,13 +932,14 @@
             justify-content: space-between;
             padding: 8px 12px;
             margin-bottom: 6px;
-            background: rgba(255, 255, 255, 0.03);
-            border-left: 3px solid transparent; /* Цветная полоска слева */
+            background:linear-gradient(90deg, rgba(0, 0, 0, 0.76), transparent);
+            border-left: 2px solid #e4989e;
+            box-shadow: -2px 0 6px rgba(209, 33, 48, 0.6);
             transition: all 0.2s;
         }
         
         .attr-list li:hover {
-            background: rgba(255, 255, 255, 0.07);
+            background: linear-gradient(90deg, rgba(53, 15, 15, 0.76), transparent);
             padding-left: 15px;
         }
 
@@ -1000,7 +1024,7 @@
 
         /* --- ПЕРКИ (Старый стиль) --- */
         .perk-item {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.363);
             border: 1px solid var(--border);
             padding: 12px;
             margin-bottom: 10px;
@@ -1582,7 +1606,7 @@
                 <div class="perk-item">
                     <div class="perk-header">
                         <span>Точность</span>
-                        <span>Cost: <span class="perk-cost">7</span></span>
+                        <span>Цена: <span class="perk-cost">7</span></span>
                     </div>
                     <p class="perk-description">
                         При нанесении раны, если бросок атаки > защиты на <span>[3]</span>, вы выбираете тип раны.
@@ -1592,7 +1616,7 @@
                 <div class="perk-item">
                     <div class="perk-header">
                         <span>Кибер-Синхронизация</span>
-                        <span>Cost: <span class="perk-cost">4</span></span>
+                        <span>Цена: <span class="perk-cost">4</span></span>
                     </div>
                     <p class="perk-description">
                         Позволяет игнорировать штраф <span>[-1]</span> к Психике за каждый второй имплант.
